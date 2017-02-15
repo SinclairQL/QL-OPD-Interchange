@@ -1,0 +1,58 @@
+100 LET Release$="2.6"
+110 INK 4 : PAPER 0
+120 CLS#0 : CLS
+130 CSIZE 1,1 : PRINT "OPD/QL INTERCHANGE"
+140 CSIZE 0,0 : INK 2 : PRINT "  Release"!Release$
+150 CSIZE 1,0 : INK 4
+160 PRINT \"Creating an issue cartridge"
+170 PRINT#0,"Please put blank cartridge in MDV1"
+180 PRINT#0,'... and press a key when ready'
+190 REPeat loop : IF INKEY$(0)<>"" : EXIT loop : END REPeat loop
+200 CLS#0
+210 INK 4 : PRINT \"Formatting"!
+220 INK 7 : PRINT !"MDV1_OPD/QL " & Release$
+230 INK 4
+240 FOR loop=1 TO 3 : FORMAT "MDV1_OPD/QL " & Release$
+250 PRINT
+260 RESTORE 
+270 REPeat loop
+280    READ infile$
+290    IF infile$="" : EXIT loop
+300    READ outfile$
+310    INK 4 : PRINT "Copying"!
+320    INK 7 : PRINT !outfile$!
+330    COPY "Flp1_" & infile$ TO "Mdv1_" & outfile$
+340    INK 2 : PRINT "   DONE" : INK 4
+350 END REPeat loop
+360 EW Flp1_OPDCOPY
+370 DIR "Mdv1_"
+380 PRINT
+390 CSIZE#0,2,0
+400 PRINT#0,"OPD/QL Interchange"\"Issue cartridge created"
+410 CSIZE#0,0,0
+420 STOP
+430 :
+440 DEFine PROCedure Done
+450 INK 2 : PRINT "   DONE" : INK 4
+460 END DEFine 
+470 :
+480 DATA "BOOT_CHECK","BOOT"
+490 DATA "OPDDriver","OPDDriver"
+500 DATA "OPDLoad","OPDLoad"
+510 DATA "OPDEnd","OPDEnd"
+520 DATA "OPDCopy","OPDCopy"
+530 DATA "OPDBasic","OPDBasic"
+540 DATA "OPD1_doc","OPD1_doc"
+550 DATA "OPD2_doc","OPD2_doc"
+560 DATA "OPDBas1_doc","OPDBas1_doc"
+570 DATA "OPDBas2_doc","OPDBas2_doc"
+580 DATA "BOOT_OK","BOOT_OK"
+590 :
+600 DATA ""
+610 :
+620 DEFine PROCedure S
+630 LOCal x$
+640 LET x$="Flp1_OPD_Issue"
+650 CLS#0 : PRINT#0,"SAVING"!x$
+660 DELETE x$ : SAVE x$
+670 END DEFine 

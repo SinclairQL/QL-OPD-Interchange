@@ -1,0 +1,40 @@
+1 PAPER#0,0:PAPER#1,0:PAPER#2,0
+2 INK#0,4:INK#1,7:INK#2,2
+3 OPEN#3,"512x256a0x0":PAPER#3,0:CLS#3
+4 REPeat mainloop
+5 OPEN#4,"scr_448x40a32x10":PAPER#4,2:CLS#3:CLS#4
+6 CSIZE#4,3,1:OVER#4,1: FLASH#4,0
+7 FOR x=0 TO 5
+8  CURSOR#4,65-x,10-x
+9  INK#4,4*(x>3):PRINT#4," OPD/QL INTERCHANGE ";
+10 END FOR x
+11 CSIZE#4,2,0:OVER#4,0:CURSOR#4,10,20:INK#4,0
+12 PRINT#4," 1985, D.J.Walker      Release 2.6";
+13 OPEN#5,"448x150a32x50":PAPER#5,0:CLS#5
+14 AT#5,1,11:CSIZE#5,3,0:PAPER#5,4:INK#5,0
+15 PRINT#5," OPTIONS ":PAPER#5,0:CSIZE#5,2,0
+16 m 4,1,"","Quit to SUPERBASIC"
+17 m 6,2,"OPDCOPY: ","OPD/QL File Copy"
+18 m 8,3,"OPDLOAD: ","Load   OPD Driver"
+19 m 9,4,"OPDEND:  ","Unload OPD Driver"
+20 AT#5,11,11:CSIZE#5,3,0:PAPER#5,2: INK#5,0:FLASH#5,1
+21 REPeat loop
+22 opt$=INKEY$(#5,-1):opt=CODE(opt$)
+23 IF opt>=50 AND opt<=53:PRINT#5," Loading ";
+24 FLASH#5,0
+25 SELect ON opt
+26   =27,49: EXIT mainloop
+27   =50: EXEC_W Flp1_opdcopy:EXIT loop
+28   =51: EXEC_W Flp1_opdload:EXIT loop
+29   =52: EXEC_W Flp1_opdend:EXIT loop
+30   =REMAINDER : BEEP 2000,200
+31 END SELect 
+32 END REPeat loop
+33 END REPeat mainloop
+34 CLOSE#5:CLOSE#4:CLOSE#3
+35 STOP
+36 :
+37 DEFine PROCedure m (p,n,pr,tx)
+38 AT#5,p,4:INK#5,6:PRINT#5,n;". ";
+39 INK#5,2:PRINT#5,pr;:INK#5,4:PRINT#5,tx
+40 END DEFine 

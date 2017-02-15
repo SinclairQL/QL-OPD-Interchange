@@ -1,0 +1,37 @@
+100 x$=VER$
+110 IF x$<>"AH" AND x$<>"JM" AND x$<>"JS"
+120    CSIZE 0,0 : PAPER 0 : INK 4 : CLS : CLS#0 : BEEP 10000,100
+130    PRINT "This software has not been validated"
+140    PRINT "for use with this version of the QL"
+150    PRINT "ROM. ";: INK 7: PRINT "You have version"!x$;"." : INK 4
+160    PRINT \"If you NOW put a blank cartridge into"
+170    PRINT "MDV1 and type the command ROMDUMP,"
+180    PRINT "then a copy of your QL's ROM will be"
+190    PRINT "written to MDV1."
+200    PRINT \"If you send this cartridge to:"
+210    INK 7 : PRINT TO 6;"D.J. Walker"
+220    PRINT TO 8;"22 Kimptons Mead"
+230    PRINT TO 10;"Potter Bar"
+240    PRINT TO 12;"Herts, EN6 3HZ"
+250    PRINT TO 6;"Tel: (0707) 52791"
+260    INK 4 : PRINT "then the software will be validated"
+270    PRINT "for your version of the ROM, and you"
+280    PRINT "will have half the purchase price"
+290    PRINT "refunded for the trouble caused."
+300    BEEP 20000,120
+310    STOP
+320 ELSE 
+330    DELETE mdv1_BOOT
+340    COPY mdv1_BOOT_OK TO mdv1_BOOT
+350    DELETE mdv1_BOOT_OK
+360    LRUN mdv1_BOOT
+370 :
+380 DEFine PROCedure Romdump
+390 PRINT "MDV1 will be reformated"
+400 PRINT "Press Y to proceed."
+410 IF NOT (INKEY$(-1)=="Y") : RETurn 
+420 x$=VER$ : FOR x=1 TO 3 : FORMAT mdv1_
+430 SBYTES 'mdv1_' & x$ & '_ROM',0,49152
+440 SBYTES mdv1_Plugin_ROM,49152,16384
+450 SBYTES mdv1_Expansion_ROM,786432,16384
+460 END DEFine 

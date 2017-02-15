@@ -1,0 +1,306 @@
+1 REMark    OPDBASIC      Ver 2.7
+2 REMark    ~~~~~~~~
+3 REMark  1986, D.J.Walker
+4 :
+5 DIM thisword$(20), text$(50)
+6 DIM word$(274,12),type(274)
+7 DIM source$(40), list$(40)
+8 DIM unchecked$(40)
+9 Initialise
+10 REPeat mainloop
+11     parameters
+12     open_files
+13     process
+14 END REPeat mainloop
+15 :
+16 DEFine PROCedure parameters
+17 Title_Line "PARAMETER INPUT"
+18 INK 4
+19 AT 6,3:PRINT "PROGRAM FILE:"
+20 AT 7,4:PRINT "(ENTER = Quit)"
+21 AT 9,3:PRINT "LISTING FILE:"
+22 AT 10,4: PRINT "(ENTER = Screen)"
+23 INK 6
+24 AT 6,18:INPUT source$
+25 IF source$="" THEN STOP
+26 AT 9,18:INPUT list$
+27 errors=0: cautions=0: warnings=0: sw=0
+28 END DEFine 
+29 :
+30 DEFine PROCedure open_files
+31 OPEN_IN#3,source$
+32 IF LEN(list$)=0 THEN 
+33     OPEN#5,scr_448x80a32x116
+34     CLS #5
+35     AT 10,0:CLS 3
+36 ELSE 
+37     OPEN#5,list$
+38     PRINT#5,"FILE: ";source$\\
+39 END IF 
+40 END DEFine 
+41 :
+42 DEFine PROCedure process
+43 LOCal thisword$(40):
+44 PAPER 4: INK 0
+45 CSIZE 2,0: AT 1,8: CSIZE 2,1
+46 PRINT " PROCESSING LINE "
+47 REPeat readloop
+48   INPUT #3,text$:x=LEN(text$)
+49   IF EOF(#3) THEN EXIT readloop
+50   linenum=text$
+51   PAPER 4: INK 0
+52   CSIZE 2,0: AT 1,25: CSIZE 2,1
+53   PRINT linenum;" "
+54   posn= " " INSTR text$
+55   REPeat checkloop
+56     nextword$
+57     IF LEN(thisword$)=0 THEN NEXT readloop
+58     IF sw=0 AND thisword$=="REMark" THEN NEXT readloop
+59     x=CheckWord(thisword$)
+60     IF x THEN PRINT #5,"Line ";linenum;": ";TO 12;
+61     SELect ON x
+62         =0: NEXT checkloop
+63         =1: error_msg "Not implemented on OPD"
+64         =2: error_msg "Not implemented on QL"
+65         =3: warn_msg "Parameters are different on OPD and QL"
+66         =4: warn_msg "OPD only supports 4 colour mode"
+67         =5: warn_msg "Maximum Size: OPD 480x240, QL 512x256"
+68         =6: warn_msg "OPD only uses widths 0 and 2"
+69         =7: warn_msg "OPD uses Segment Addresses"
+70         =8: caution_msg "QL Toolkit keyword"
+71         =9: caution_msg "QL Super Toolkit Keyword"
+72     END SELect 
+73   END REPeat checkloop
+74 END REPeat readloop
+75 CLOSE#3
+76 BEEP 10000,50:CSIZE 2,0
+77 IF LEN(list$)=0 THEN 
+78   chan=5:PRINT#chan
+79 ELSE 
+80   PRINT#5,\"ERRORS"!errors;",  CAUTIONS"!cautions;",  WARNINGS"!warnings
+81   chan=1:AT 13,3
+82 END IF 
+83 PAPER #chan,2: INK #chan,0
+84 PRINT #chan,"Press ANY key to continue"
+85 PAUSE: CLOSE#5
+86 END DEFine 
+87 :
+88 DEFine PROCedure caution_msg (text$)
+89 PRINT#5,"CAUTION: "!thisword$!TO 30;text$(1 TO LEN(text$))
+90 cautions=cautions+1
+91 PAPER 0:INK 4: CSIZE 2,0
+92 AT 4, 13:PRINT "CAUTIONS ";
+93 INK 2: PRINT cautions
+94 END DEFine 
+95 :
+96 DEFine PROCedure warn_msg (text$)
+97 PRINT#5,"WARNING: "!thisword$!TO 30;text$(1 TO LEN(text$))
+98 warnings=warnings+1
+99 PAPER 0:INK 4:CSIZE 2,0
+100 AT 4,1:PRINT "WARNINGS ";
+101 INK 2: PRINT warnings
+102 END DEFine 
+103 :
+104 DEFine PROCedure error_msg (text$)
+105 PRINT#5,"ERROR:   "!thisword$!;TO 30;text$(1 TO LEN(text$))
+106 errors=errors+1
+107 PAPER 0:INK 4:CSIZE 2,0
+108 AT 4,25:PRINT "ERRORS ";
+109 INK 2: PRINT errors
+110 END DEFine 
+111 :
+112 DEFine PROCedure nextword$
+113 LOCal sw,y,wordloop
+114 thisword$="": sw=LEN(thisword$)
+115 REPeat wordloop
+116     IF posn > LEN(text$) THEN EXIT wordloop
+117     y=CODE(text$(posn))
+118     SELect ON y
+119     =0 TO 32,33,35,38,40 TO 47,58 TO 64,91 TO 94,96,123 TO 255:
+120         IF sw=0 AND LEN(thisword$)<>0 THEN EXIT wordloop
+121     =34,39:
+122         IF thisword$<>"" THEN EXIT wordloop
+123         IF sw THEN 
+124             IF y=sw THEN sw=0:END IF 
+125         ELSE 
+126             sw=y
+127         END IF 
+128     =48 TO 57:
+129         IF sw=0 AND LEN(thisword$)<>0 THEN thisword$=thisword$ & CHR$(y)
+130     =36,37,65 TO 90,95,97 TO 122:
+131         IF NOT sw THEN thisword$=thisword$&CHR$(y)
+132     END SELect 
+133 y=LEN(thisword$)
+134 posn=posn+1
+135 END REPeat wordloop
+136 END DEFine 
+137 :
+138 DEFine FuNction CheckWord (unchecked$)
+139 LOCal x,y,z,lp
+140 IF LEN(unchecked$) > DIMN(word$,2) THEN RETurn 0
+141 LET x=INT(DIMN(word$)/2):LET y=DIMN(word$)
+142 REPeat lp
+143     z=LEN(word$(x))
+144     IF word$(x)==unchecked$ THEN RETurn type(x)
+145     IF x=y THEN RETurn 0
+146     IF unchecked$ > word$(x) THEN 
+147        x=INT((x+y+1)/2)
+148     ELSE 
+149        y=x: x=INT((x+1)/2)
+150     END IF 
+151 END REPeat lp
+152 END DEFine 
+153 :
+154 DEFine PROCedure Set_Screen
+155 LOCal x
+156 IF PEEK(163890) THEN MODE 4
+157 WINDOW 512,256,0,0:PAPER 0:CLS
+158 WINDOW 460,26,28,10: PAPER 2: CLS
+159 CSIZE 2,1: OVER 1
+160 FOR x=0 TO 4
+161   INK 4*(x>2): CURSOR 182-x,5-x
+162   PRINT "OPDBASIC";
+163 END FOR x
+164 OVER 0:CSIZE 2,0:INK 0
+165 CURSOR 5,2:PRINT "  @ 1986";
+166 CURSOR 5,12:PRINT "D.J.Walker";
+167 CURSOR 360,2:PRINT "Release";
+168 CURSOR 384,12:PRINT "2.7";
+169 WINDOW 460,160,28,36:PAPER 0
+170 CSIZE 2,0:INK 7
+171 END DEFine 
+172 :
+173 DEFine PROCedure Press_Any_Key
+174 LOCal x$(1)
+175 OVER -1
+176 REPeat lp
+177   AT 15,5:PRINT "Press ANY key to continue";
+178   x$=INKEY$(40)
+179   IF LEN(x$)<>0 THEN EXIT lp
+180 END REPeat lp
+181 OVER 0: CLS 3
+182 END DEFine 
+183 :
+184 DEFine PROCedure Title_Line (text$)
+185 PAPER 0: CLS
+186 AT 1,INT(18-(LEN(text$)/2))
+187 UNDER 1:CSIZE 2,1:INK 4
+188 PRINT text$
+189 UNDER 0:CSIZE 2,0:INK 7
+190 END DEFine 
+191 :
+192 DEFine PROCedure Initialise
+193 Set_Screen: CSIZE 3,1
+194 AT 3,8:PRINT "INITIALISING"
+195 RESTORE 231
+196 FOR x=1 TO 272:READ word$(x),type(x)
+197 CLS:CSIZE 2,0
+198 PRINT \"This program is used to check a Basic"
+199 PRINT "program to identify statements that"
+200 INK 4: PRINT "EITHER";:INK 7
+201 PRINT " are not compatible with both"
+202 PRINT "the QL and OPD implementations of"
+203 PRINT "Basic ";:INK 4:PRINT "OR";:INK 7
+204 PRINT " which are available in both"
+205 PRINT "Basics, but are implemented slightly"
+206 PRINT "differently."
+207 INK 2
+208 PRINT \"  INSTRUCTIONS ON THE USE OF THIS"
+209 PRINT "  PROGRAM ARE CONTAINED IN THE"
+210 PRINT "  OPD/QL BASIC CONVERSION GUIDE."
+211 INK 7:Press_Any_Key
+212 END DEFine 
+213 :
+214 REMark List of SuperBasic Keywords
+215 REMark in alphabetical order.
+216 REMark 
+217 REMark Each word is followed by a
+218 REMark value indicating comatibility
+219 REMark 
+220 REMark 0 = OPD and QL
+221 REMark 1 = Not supported on OPD
+222 REMark 2 = Not Supported on QL
+223 REMark 3 = Different parameters
+224 REMark 4 = 4 colour mode only
+225 REMark 5 = Different screen size
+226 REMark 6 = Limited Character Widths
+227 REMark 7 = Memory Address Differences
+228 REMark 8 = QL Toolkit keyword
+229 REMark 9 = QL Super Toolkit keyword
+230 :
+231 DATA 'ABS',0,  'ACOPY',9,'ACOS',0,  'ACOT',0
+232 DATA 'ADATE',0,'ADEL',9, 'ADIR',9,  'AJOB',9
+233 DATA 'ALARM',9,'ALCHP',8,'ALTKEY',9,'AND',0
+234 DATA 'ARC',1,  'ARC_R',1,'AREN',9,  'ASIN',0
+235 DATA 'ASTAT',9,'AT',0,   'ATAN',0,  'AUTO',0
+236 DATA 'BAUD',1, 'BEEP',3, 'BGET',8,  'BIN',8
+237 DATA 'BIN$',8, 'BLOCK',1,'BORDER',1,'BPUT',8
+238 DATA 'BYE',2
+239 DATA 'CALL',3,   'CDEC$',8,    'CHAR_USE',8,'CHAR_INC',8
+240 DATA 'CHR$',0,   'CIRCLE',1,   'CIRCLE_R',1,'CLCHP',8
+241 DATA 'CLEAR',0,  'CLOCK',9,    'CLOSE',0,   'CLS',0
+242 DATA 'CODE',0,   'CONTINUE',0, 'COPY',0,    'COPY_H',9
+243 DATA 'COPY_N',0, 'COPY_O',9,   'COS',0,     'COT',0
+244 DATA 'CSIZE',6,  'CURDIS',8,   'CURSEN',8,  'CURSOR',1
+245 DATA 'DATA',0,    'DATAD$',9,  'DATA_USE',8,'DATE',3
+246 DATA 'DAY$',0,    'DDOWN',9,   'DEG',0,     'DEFine',0
+247 DATA 'DELETE',0,  'DEL_DEFB',9,'DEL_PSE',2, 'DESTD$',9
+248 DATA 'DEST_USE',9,'DIM',0,     'DIMN',0,    'DIR',1
+249 DATA 'DIV',0,     'DLINE',0,   'DLIST',9,   'DO',9
+250 DATA 'DNEXT',9,   'DUP',9
+251 DATA 'ED',8,    'ELLIPSE',1,'ELLIPSE_R',1,'EDIT',0
+252 DATA 'ELSE',0,  'END',0,    'EOF',0,      'ERLIN',1
+253 DATA 'ERNUM',1, 'ERROR',0,  'ERR_BL',1,   'ERR_BN',1
+254 DATA 'ERR_BO',1,'ERR_BP',1, 'ERR_DF',1,   'ERR_EF',1
+255 DATA 'ERR_EX',1,'ERR_FE',1, 'ERR_FF',1,   'ERR_IU',1
+256 DATA 'ERR_NC',1,'ERR_NF',1, 'ERR_NI',1,   'ERR_NJ',1
+257 DATA 'ERR_NO',1,'ERR_OM',1, 'ERR_OR',1,   'ERR_OV',1
+258 DATA 'ERR_RO',1,'ERR_TE',1, 'ERR_XP',1,   'ET',8
+259 DATA 'EX',8,    'EXEC',1,   'EXEC_W',1,   'EXP',0
+260 DATA 'EXTRAS',8,'EW',8
+261 DATA 'FDAT',8,    'FDEC$',8,   'FEXP$',9, 'FILL',1
+262 DATA 'FILL$',0,   'FLASH',1,   'FLEN',8,  'FLUSH',9
+263 DATA 'FNAME$',9,  'FOP_DIR',8, 'FOP_IN',8,'FOP_NEW',8
+264 DATA 'FOP_OVER',8,'FOPEN',8,   'FOR',0,   'FORMAT',1
+265 DATA 'FPOS',8,    'FREE_MEM',8,'FSERVE',9,'FTEST',9
+266 DATA 'FTYP',8,    'FuNction',0,'FUPDT',9, 'FXTRA',9
+267 DATA 'GET',8,     'GOSUB',0,   'GOTO',0
+268 DATA 'HEX',8,     'HEX$',8
+269 DATA 'IDEC$',8,  'IF',0,    'INCLUDE',2,'INK',4
+270 DATA 'INKEY$',0, 'INPUT',0, 'INSTR',0,  'INT',0
+271 DATA 'JOB$',8,   'JOBS',8
+272 DATA 'KEYROW',1
+273 DATA 'LBYTES',7, 'LEN',0,   'LET',0,    'LINE',1
+274 DATA 'LINE_R',1, 'LIST',0,  'LN',0,     'LOAD',0
+275 DATA 'LOCAL',0,  'LOG10',0, 'LRESPR',9, 'LRUN',0
+276 DATA 'MERGE',0,  'MISTAKE',0, 'MOD',0,  'MODE',1
+277 DATA 'MOVE',1,   'MRUN',0
+278 DATA 'NET',0,    'NEW',0,    'NEXT',0,  'NOT',0
+279 DATA 'NXJOB',8
+280 DATA 'OJOB',8,   'ON',0,       'OPEN',0, 'OPEN_IN',0
+281 DATA 'OPEN_NEW', 'OPEN_OVER',9,'OR',0,   'OVER',1
+282 DATA 'PAN',1,    'PAPER',4,   'PARNAM$',9, 'PARSTR$',9
+283 DATA 'PARTYP',8, 'PARUSE',8,  'PAUSE',0,   'PEEK',7
+284 DATA 'PEEK_L',7,  'PEEK_W',7, 'PENDOWN',1, 'PENUP',1
+285 DATA 'PI',0,      'PJOB',8,   'POINT',1,   'POINT_PATCH',9
+286 DATA 'POINT_R',1, 'POKE',7,   'POKE_L',7,  'POKE_W',7
+287 DATA 'PRINT',0,   'PRINT_USING',9, 'PROCedure',0
+288 DATA 'PROG_USE',8,'PSE$',2,        'PSERVE',9
+289 DATA 'PUBLISH',2, 'PUBLISH_TK',2,  'PUT',8
+290 DATA 'RAD',0,      'RANDOMISE',0,'READ',0,   'RECHP',8
+291 DATA 'RECOL',1,    'REMark',0,  'RENAME',8,  'REPeat',0
+292 DATA 'REPORT',0,   'RESPR',1,   'RESTORE',0, 'RETRY',0
+293 DATA 'RETurn',0,   'RJOB',8,    'RND',0,     'RUN',0
+294 DATA 'SAVE',0,     'SAVE_O',9,  'SAVE_TK',2, 'SBYTES',7
+295 DATA 'SBYTES_O',9, 'SCALE',1,   'SCROLL',1,  'SDATE',0
+296 DATA 'SEGMENT',2,  'SELect',0,  'SET_PSE',2, 'SEXEC',1
+297 DATA 'SEXEC_O',9,  'SGN',0,     'SIN',0,     'SORT',9
+298 DATA 'SPJOB',8,    'SPL',8,     'SPLF',9,    'SPL_USE',8
+299 DATA 'SQRT',0,     'STAT',8,    'STOP',0,    'STRIP',1
+300 DATA 'TAN',0,      'TDIR',9,    'THEN',0,    'TIME$',0
+301 DATA 'TK2_EXT',9,  'TO',0,      'TRA',1,     'TRACE',2
+302 DATA 'TRUNCATE',8, 'TURN',1,    'TURNTO',1
+303 DATA 'UNDER',0
+304 DATA 'VER$',0,     'VIEW',0
+305 DATA 'WCOPY',9,    'WHEN',0,    'WIDTH',0,   'WINDOW',5
+306 DATA 'XOR',0
